@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adriel Magalona - Interactive Presentation</title>
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://unpkg.com/three@0.160.0/build/three.module.js" as="script">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" as="script">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+        .loading h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            animation: pulse 1.5s infinite;
+        }
+        .loading p {
+            font-size: 1.2em;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+        .loading .status {
+            font-size: 1em;
+            color: #00ffff;
+            margin-bottom: 15px;
+            min-height: 20px;
+        }
+        .loading .progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        .loading .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #00ffff;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        .loading .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        #error-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 1001;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading">
+        <h1>Loading...</h1>
+        <p>Please wait while we initialize the presentation</p>
+        <div class="status">Loading resources...</div>
+        <div class="progress">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+    <div id="error-container"></div>
+
+    <!-- Load GSAP first -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- Import maps polyfill -->
+    <script src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script>
+        // Global loading status update
+        window.updateLoadingStatus = function(status) {
+            const statusElement = document.querySelector('.loading .status');
+            if (statusElement) {
+                statusElement.textContent = status;
+            }
+        };
+    </script>
+    
+    <!-- Load main script -->
+    <script type="module" src="main.js"></script>
+</body>
+</html>
