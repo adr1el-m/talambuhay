@@ -1,0 +1,284 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground: 255, 255, 255;
+  --background: 0, 0, 0;
+}
+
+@layer base {
+  html {
+    @apply bg-black scroll-smooth;
+  }
+  
+  body {
+    @apply bg-black text-white antialiased;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-black;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/20 rounded-full transition-colors;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-white/30;
+}
+
+/* Apple-like animations */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes textGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Apple-like text styles */
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400;
+  background-size: 200% auto;
+  animation: textGradient 8s linear infinite;
+}
+
+/* Apple-like glass effect */
+.glass {
+  @apply backdrop-blur-xl bg-white/[0.02] border border-white/[0.05];
+}
+
+.glass-hover {
+  @apply transition-all duration-500;
+}
+
+.glass-hover:hover {
+  @apply bg-white/[0.05] border-white/[0.1];
+}
+
+/* Parallax base styles */
+.parallax-wrap {
+  @apply relative overflow-hidden;
+  transform-style: preserve-3d;
+}
+
+.parallax-element {
+  @apply absolute w-full h-full;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Apple-like transitions */
+.smooth-transition {
+  @apply transition-all duration-700 ease-out;
+}
+
+/* Apple-like gradients */
+.gradient-blur {
+  @apply absolute inset-0;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  filter: blur(80px);
+}
+
+/* Apple-like section styles */
+.section-spacing {
+  @apply py-24 md:py-32;
+}
+
+.content-width {
+  @apply max-w-7xl mx-auto px-6 md:px-8;
+}
+
+/* Apple-like typography */
+.display-text {
+  @apply text-5xl md:text-7xl font-bold tracking-tight;
+}
+
+.heading-text {
+  @apply text-3xl md:text-5xl font-semibold tracking-tight;
+}
+
+.body-text {
+  @apply text-lg md:text-xl text-gray-400 leading-relaxed;
+}
+
+/* Glass effect */
+.glass-card {
+  @apply bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl 
+         transition-all duration-300 ease-out hover:border-white/20;
+}
+
+/* Parallax and animation effects */
+.parallax {
+  @apply relative overflow-hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.parallax-layer {
+  @apply absolute inset-0;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Gradient animations */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 15s ease infinite;
+}
+
+/* Hover effects */
+.hover-lift {
+  @apply transition-transform duration-300 ease-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+}
+
+/* Glow effects */
+.glow {
+  @apply relative;
+}
+
+.glow::before {
+  content: '';
+  @apply absolute inset-0 -z-10 blur-2xl opacity-30;
+  background: radial-gradient(
+    circle at center,
+    theme('colors.blue.400'),
+    transparent 70%
+  );
+}
+
+.glass-button {
+  @apply bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 
+         transition-all duration-300 ease-out hover:scale-105 active:scale-95;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Gradient animations */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* Glow effects */
+.glow {
+  @apply relative;
+}
+
+.glow::before {
+  content: '';
+  @apply absolute inset-0 -z-10 blur-2xl opacity-40;
+  background: radial-gradient(
+    circle at center,
+    rgb(var(--accent-1)),
+    transparent 70%
+  );
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+} 
