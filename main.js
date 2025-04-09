@@ -203,6 +203,16 @@ const slides = [
         hasVideo: true,
         videoPath: "src/vid/s4.mp4"
     },
+    {
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/s4.mp4"
+    },
+    {
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/s4.mp4"
+    },
 ];
 
 let currentSlide = 0;
