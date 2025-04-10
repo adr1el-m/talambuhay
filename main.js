@@ -78,8 +78,10 @@ const nebulaMaterial = new THREE.ShaderMaterial({
     },
     vertexShader: `
         varying vec2 vUv;
+        varying vec3 vPosition;
         void main() {
             vUv = uv;
+            vPosition = position;
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
     `,
@@ -88,12 +90,51 @@ const nebulaMaterial = new THREE.ShaderMaterial({
         uniform vec3 color1;
         uniform vec3 color2;
         varying vec2 vUv;
+        varying vec3 vPosition;
+        
+        // Improved noise function
+        float random(vec2 st) {
+            return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+        }
+        
+        // Smoother noise
+        float noise(vec2 st) {
+            vec2 i = floor(st);
+            vec2 f = fract(st);
+            
+            // Four corners in 2D of a tile
+            float a = random(i);
+            float b = random(i + vec2(1.0, 0.0));
+            float c = random(i + vec2(0.0, 1.0));
+            float d = random(i + vec2(1.0, 1.0));
+            
+            // Smooth interpolation
+            vec2 u = f * f * (3.0 - 2.0 * f);
+            
+            return mix(a, b, u.x) +
+                    (c - a) * u.y * (1.0 - u.x) +
+                    (d - b) * u.x * u.y;
+        }
+        
         void main() {
-            vec2 uv = vUv;
-            float noise = fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453);
-            float pattern = sin(uv.x * 10.0 + time) * sin(uv.y * 10.0 + time) * noise;
-            vec3 color = mix(color1, color2, pattern);
-            gl_FragColor = vec4(color, 0.3);
+            // Use 3D position instead of just UV for more natural pattern
+            vec3 pos = normalize(vPosition);
+            
+            // Create multiple noise layers at different scales
+            float noiseVal = noise(pos.xy * 10.0 + time * 0.1) * 0.5 +
+                             noise(pos.xy * 20.0 - time * 0.05) * 0.3 +
+                             noise(pos.xy * 40.0 + time * 0.2) * 0.2;
+            
+            // Smooth the pattern for more natural transition
+            float pattern = 0.5 + 0.5 * sin(noiseVal * 3.14159 + time);
+            
+            // Gradient mix with smoothstep for soft transition
+            vec3 color = mix(color1, color2, smoothstep(0.2, 0.8, pattern));
+            
+            // Add subtle depth with position
+            float alpha = 0.3 * (0.8 + 0.2 * noise(pos.xy * 5.0));
+            
+            gl_FragColor = vec4(color, alpha);
         }
     `,
     transparent: true,
@@ -112,8 +153,8 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.enableZoom = true;
-controls.minDistance = 5;
-controls.maxDistance = 15;
+controls.minDistance = 1;
+controls.maxDistance = 30;
 controls.maxPolarAngle = Math.PI / 2;
 
 // Create navigation controls
@@ -143,7 +184,7 @@ const buttonStyle = `
 `;
 
 const prevButton = document.createElement('button');
-prevButton.innerHTML = '← Previous';
+prevButton.innerHTML = '← Nakaraan';
 prevButton.style.cssText = buttonStyle;
 prevButton.onmouseover = () => prevButton.style.background = 'rgba(255, 255, 255, 0.3)';
 prevButton.onmouseout = () => prevButton.style.background = 'rgba(255, 255, 255, 0.2)';
@@ -163,7 +204,7 @@ slideIndicator.style.cssText = `
 navContainer.appendChild(slideIndicator);
 
 const nextButton = document.createElement('button');
-nextButton.innerHTML = 'Next →';
+nextButton.innerHTML = 'Susunod →';
 nextButton.style.cssText = buttonStyle;
 nextButton.onmouseover = () => nextButton.style.background = 'rgba(255, 255, 255, 0.3)';
 nextButton.onmouseout = () => nextButton.style.background = 'rgba(255, 255, 255, 0.2)';
@@ -182,36 +223,165 @@ nextButton.addEventListener('click', nextSlide);
 
 // Slides content
 const slides = [
-    {
-        title: "",
-        color: 0x2196F3,
+    { // Pangalan
+        color: 0x4CAF50,
         hasVideo: true,
         videoPath: "src/vid/s1.mp4"
     },
-    {
+
+    { // Saan nagmula ang aking pangalan
         color: 0x4CAF50,
         hasVideo: true,
         videoPath: "src/vid/s2.mp4"
     },
-    {
+
+    { // anong nickname ang ugsto itawag sakin
         color: 0x4CAF50,
         hasVideo: true,
         videoPath: "src/vid/s3.mp4"
     },
-    {
+    { //Kaarawan
         color: 0x4CAF50,
         hasVideo: true,
-        videoPath: "src/vid/s4.mp4"
+        videoPath: "src/vid/kaarawan.mp4"
     },
-    {
+    { // Edad
         color: 0x4CAF50,
         hasVideo: true,
-        videoPath: "src/vid/s4.mp4"
+        videoPath: "src/vid/edad.mp4"
     },
-    {
+
+    { // Address
         color: 0x4CAF50,
         hasVideo: true,
-        videoPath: "src/vid/s4.mp4"
+        videoPath: "src/vid/address.mp4"
+    },
+
+    { // internet
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/connection.mp4"
+    },
+
+    { // device
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/device.mp4"
+    },
+
+    { // kasalukuyan
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/kasalukuyang.mp4"
+    },
+
+    // saakin at sa pamilya
+
+    { // me
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/me.mp4"
+    },
+    { // sport
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/sports.mp4"
+    },
+    { // guitar talent
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/talent.mp4"
+    },
+    { // family
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/family.mp4"
+    },
+
+        // Paaralan
+        { // Paaralan
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/paaralan.mp4"
+        },
+        { // Edad
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/p1.mp4"
+        },
+        { // Edad
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/p2.mp4"
+        },
+        { // Edad
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/p3.mp4"
+        },
+        { // Edad
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/p4.mp4"
+        },
+        { // Edad
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/p5.mp4"
+        },
+
+        { // no money
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/no money.mp4"
+        },
+
+
+                //scholarship
+                { // no money
+                    color: 0x4CAF50,
+                    hasVideo: true,
+                    videoPath: "src/vid/isko1.mp4"
+                },
+                { // no money
+                    color: 0x4CAF50,
+                    hasVideo: true,
+                    videoPath: "src/vid/isko2.mp4"
+                },
+
+                { // no money
+                    color: 0x4CAF50,
+                    hasVideo: true,
+                    videoPath: "src/vid/isko3.mp4"
+                },
+        
+        
+        //Why CS
+        { // Edad
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/whycs1.mp4"
+        },
+        { // Edad
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/whycs2.mp4"
+        },
+        { // Edad
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/whycs3.mp4"
+        },
+        { // Edad
+            color: 0x4CAF50,
+            hasVideo: true,
+            videoPath: "src/vid/whycs4.mp4"
+        },
+
+    { // Motto
+        color: 0x4CAF50,
+        hasVideo: true,
+        videoPath: "src/vid/motto.mp4"
     },
 ];
 
@@ -528,11 +698,11 @@ function toggleRotation() {
 }
 
 function zoomIn() {
-    camera.position.z = Math.max(camera.position.z - 1, controls.minDistance);
+    camera.position.z = Math.max(camera.position.z - 2, controls.minDistance);
 }
 
 function zoomOut() {
-    camera.position.z = Math.min(camera.position.z + 1, controls.maxDistance);
+    camera.position.z = Math.min(camera.position.z + 2, controls.maxDistance);
 }
 
 function changeNebulaColors() {
