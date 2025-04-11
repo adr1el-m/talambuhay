@@ -273,53 +273,41 @@ const slides = [
     { // Pangalan
         color: 0x050629,
         hasVideo: true,
-        videoPath: "src/vid/s1.mp4"
+        videoPath: "src/vid/1Pangalan.mp4"
     },
 
     { // Saan nagmula ang aking pangalan
         color: 0x050629,
         hasVideo: true,
-        videoPath: "src/vid/s2.mp4"
+        videoPath: "src/vid/2BakitPangalan.mp4"
     },
 
     { // anong nickname ang ugsto itawag sakin
         color: 0x050629,
         hasVideo: true,
-        videoPath: "src/vid/s3.mp4"
+        videoPath: "src/vid/3Palayaw.mp4"
     },
     { //Kaarawan
         color: 0x050629,
         hasVideo: true,
-        videoPath: "src/vid/kaarawan.mp4"
+        videoPath: "src/vid/4Kaarawan.mp4"
     },
     { // Edad
         color: 0x050629,
         hasVideo: true,
-        videoPath: "src/vid/edad.mp4"
+        videoPath: "src/vid/5Edad.mp4"
     },
 
     { // Address
         color: 0x050629,
         hasVideo: true,
-        videoPath: "src/vid/address.mp4"
+        videoPath: "src/vid/6Address.mp4"
     },
 
-    { // internet
+    { // Address
         color: 0x050629,
         hasVideo: true,
-        videoPath: "src/vid/connection.mp4"
-    },
-
-    { // device
-        color: 0x050629,
-        hasVideo: true,
-        videoPath: "src/vid/device.mp4"
-    },
-
-    { // kasalukuyan
-        color: 0x050629,
-        hasVideo: true,
-        videoPath: "src/vid/kasalukuyang.mp4"
+        videoPath: "src/vid/7Komyut.mp4"
     },
 
     // saakin at sa pamilya
@@ -334,16 +322,78 @@ const slides = [
         hasVideo: true,
         videoPath: "src/vid/sports.mp4"
     },
-    { // guitar talent
-        color: 0x050629,
-        hasVideo: true,
-        videoPath: "src/vid/talent.mp4"
-    },
+
+        { // intro
+            color: 0x050629,
+            hasVideo: true,
+            videoPath: "src/vid/intro.mp4"
+        },
+        
+
+        { // intro
+            color: 0x050629,
+            hasVideo: true,
+            videoPath: "src/vid/lungs.mp4"
+        },
+
+        { // intro
+            color: 0x050629,
+            hasVideo: true,
+            videoPath: "src/vid/turo.mp4"
+        },
+
+        { // intro
+            color: 0x050629,
+            hasVideo: true,
+            videoPath: "src/vid/transition.mp4"
+        },
+
+        { // guitar talent
+            color: 0x050629,
+            hasVideo: true,
+            videoPath: "src/vid/talent.mp4"
+        },
+
+        { // intro
+            color: 0x050629,
+            hasVideo: true,
+            videoPath: "src/vid/yt.mp4"
+        },
+
+
     { // family
         color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/family.mp4"
     },
+
+    { // internet
+        color: 0x050629,
+        hasVideo: true,
+        videoPath: "src/vid/8Connection.mp4"
+    },
+
+    { // Liblib
+        color: 0x050629,
+        hasVideo: true,
+        videoPath: "src/vid/9Liblib.mp4"
+    },
+
+    { // device
+        color: 0x050629,
+        hasVideo: true,
+        videoPath: "src/vid/device.mp4"
+    },
+
+    
+
+    { // kasalukuyan
+        color: 0x050629,
+        hasVideo: true,
+        videoPath: "src/vid/kasalukuyang.mp4"
+    },
+
+
 
         // Paaralan
         { // Paaralan
@@ -559,8 +609,8 @@ fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.jso
     
     // Create metallic gold material for name
     const nameMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xffd700,
-        emissive: 0x553311,
+        color: 0xff092d,
+        emissive: 0xf25459,
         emissiveIntensity: 0.3,
         metalness: 0.9,
         roughness: 0.1,
