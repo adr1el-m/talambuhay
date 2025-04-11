@@ -178,17 +178,31 @@ controls.maxPolarAngle = Math.PI / 2;
 controls.autoRotateSpeed = 0.5;
 
 // Improved lighting
-const ambientLight = new THREE.AmbientLight(0x333366, 0.5); // Slightly blue ambient
+const ambientLight = new THREE.AmbientLight(0x333366, 0.7); // Increased ambient light
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-directionalLight.position.set(5, 5, 5);
-scene.add(directionalLight);
+// Replace single directional light with multiple softer lights
+const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.5);
+directionalLight1.position.set(5, 3, 5);
+scene.add(directionalLight1);
 
-// Add dynamic light for dramatic effect
-const movingLight = new THREE.PointLight(0x0066ff, 1, 50);
+const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+directionalLight2.position.set(-5, 3, 5);
+scene.add(directionalLight2);
+
+const directionalLight3 = new THREE.DirectionalLight(0xffffff, 0.3);
+directionalLight3.position.set(0, -3, 5);
+scene.add(directionalLight3);
+
+// Modify moving light to be softer
+const movingLight = new THREE.PointLight(0x0066ff, 0.7, 50);
 movingLight.position.set(0, 0, 15);
 scene.add(movingLight);
+
+// Add subtle rim light
+const rimLight = new THREE.DirectionalLight(0x0044ff, 0.3);
+rimLight.position.set(0, 0, -5);
+scene.add(rimLight);
 
 // Create navigation controls
 const navContainer = document.createElement('div');
@@ -1250,6 +1264,11 @@ function animate() {
     movingLight.position.y = Math.cos(time * 0.2) * 15;
     movingLight.intensity = 1 + Math.sin(time) * 0.3;
     
+    // Update lightning effect
+    if (window.lightning) {
+        window.lightning.update();
+    }
+    
     // Animate 3D texts with improved fluid motion
     if (window.titleText3D) {
         window.titleText3D.position.y = window.titleText3D.userData.originalY + Math.sin(time * 0.6) * 0.4;
@@ -1297,6 +1316,107 @@ function animate() {
         window.earth.rotation.y += 0.0005;
     }
     
+    // Animate portal
+    if (window.portal) {
+        window.portal.rotation.z = time * 0.2;
+        window.portal.material.uniforms.time.value = time;
+    }
+    
+    // Animate crystals
+    if (window.crystals) {
+        window.crystals.forEach(crystal => {
+            // Rotate crystal
+            crystal.rotation.x += crystal.userData.rotationSpeed.x;
+            crystal.rotation.y += crystal.userData.rotationSpeed.y;
+            crystal.rotation.z += crystal.userData.rotationSpeed.z;
+            
+            // Float movement
+            const floatY = Math.sin(time * crystal.userData.floatSpeed + crystal.userData.floatOffset) * 2;
+            crystal.position.y = crystal.userData.originalPosition.y + floatY;
+            
+            // Pulse effect
+            const scale = 1 + Math.sin(time * 2 + crystal.userData.floatOffset) * 0.1;
+            crystal.scale.set(scale, scale, scale);
+        });
+    }
+    
+    // Animate energy field
+    if (window.energyField) {
+        window.energyField.material.uniforms.time.value = time;
+        window.energyField.rotation.y = time * 0.1;
+    }
+    
+    // Animate spot light
+    if (window.spotLight) {
+        window.spotLight.position.x = Math.sin(time * 0.5) * 30;
+        window.spotLight.position.z = Math.cos(time * 0.5) * 30;
+    }
+    
+    // Animate plasma field
+    if (window.plasmaField) {
+        window.plasmaField.rotation.y = time * 0.1;
+        window.plasmaField.rotation.z = time * 0.05;
+        window.plasmaField.material.uniforms.time.value = time;
+    }
+    
+    // Animate energy beams
+    if (window.energyBeams) {
+        window.energyBeams.forEach((beam, index) => {
+            const angle = beam.userData.angle + time * 0.5;
+            const radius = beam.userData.radius;
+            
+            beam.position.x = Math.cos(angle) * radius;
+            beam.position.z = Math.sin(angle) * radius - 40;
+            beam.rotation.y = -angle;
+            
+            beam.material.uniforms.time.value = time;
+            
+            // Pulse effect
+            const scale = 1 + Math.sin(time * 3 + index) * 0.2;
+            beam.scale.x = beam.scale.z = scale;
+        });
+    }
+    
+    // Animate holographic rings
+    if (window.holographicRings) {
+        window.holographicRings.forEach((ring, index) => {
+            ring.rotation.z = time * (0.2 + index * 0.1);
+            ring.material.uniforms.time.value = time;
+            
+            // Breathe effect
+            const breathe = 1 + Math.sin(time * 2 + index * Math.PI / 2) * 0.1;
+            ring.scale.set(breathe, breathe, 1);
+        });
+    }
+    
+    // Animate quantum tunnel
+    if (window.quantumTunnel) {
+        window.quantumTunnel.material.uniforms.time.value = time;
+        window.quantumTunnel.rotation.z = time * 0.1;
+    }
+    
+    // Animate DNA helix
+    if (window.dnaHelix) {
+        window.dnaHelix.rotation.y = time * 0.2;
+        window.dnaHelix.children.forEach(child => {
+            if (child.material.uniforms) {
+                child.material.uniforms.time.value = time;
+            }
+        });
+    }
+    
+    // Animate cosmic dust
+    if (window.cosmicDust) {
+        window.cosmicDust.material.uniforms.time.value = time;
+    }
+    
+    // Animate vortex
+    if (window.vortex) {
+        window.vortex.rotation.y = time * 0.3;
+        window.vortex.rotation.z = time * 0.2;
+        window.vortex.material.uniforms.time.value = time;
+    }
+    
     renderer.render(scene, camera);
 }
 
@@ -1317,11 +1437,304 @@ function init() {
     // Start preloading videos for first few slides
     preloadVideos(0);
     
+    // Initialize advanced visual effects
+    initVisualEffects();
+    
     // Start animation
     animate();
     
     // Create the first slide
     createSlide();
+}
+
+// Function to initialize all the visual effects
+function initVisualEffects() {
+    // Initialize wormhole effect
+    const wormholeGeometry = new THREE.TorusGeometry(20, 8, 30, 100);
+    const wormholeMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            colorA: { value: new THREE.Color(0x3311bb) },
+            colorB: { value: new THREE.Color(0x00ffff) }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            void main() {
+                vUv = uv;
+                vPosition = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform float time;
+            uniform vec3 colorA;
+            uniform vec3 colorB;
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            
+            // Spiral noise function
+            float noise(vec2 p) {
+                return sin(p.x * 10.0) * sin(p.y * 10.0);
+            }
+            
+            void main() {
+                // Create spiral pattern
+                float distFromCenter = length(vPosition.xy) / 20.0;
+                float angle = atan(vPosition.y, vPosition.x);
+                float spiral = sin(distFromCenter * 20.0 - time * 2.0 + angle * 3.0);
+                
+                // Add noise layers
+                float noise1 = noise(vUv * 5.0 + time * 0.1);
+                float noise2 = noise(vUv * 10.0 - time * 0.2);
+                
+                // Color gradient based on spiral pattern and noise
+                vec3 color = mix(colorA, colorB, sin(spiral + noise1 + noise2) * 0.5 + 0.5);
+                
+                // Add glow effect
+                float glow = pow(1.0 - abs(distFromCenter - 0.5), 2.0);
+                color += vec3(0.1, 0.3, 0.6) * glow;
+                
+                // Pulse effect
+                float pulse = 0.5 + 0.5 * sin(time);
+                color *= 0.8 + pulse * 0.4;
+                
+                // Variable transparency based on pattern
+                float alpha = min(0.7, glow * (0.3 + 0.5 * spiral));
+                
+                gl_FragColor = vec4(color, alpha);
+            }
+        `,
+        side: THREE.DoubleSide,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+
+    const wormhole = new THREE.Mesh(wormholeGeometry, wormholeMaterial);
+    wormhole.rotation.x = Math.PI / 2;
+    wormhole.position.z = -100;
+    scene.add(wormhole);
+    window.wormhole = wormhole;
+    
+    // Initialize lightning effect
+    window.lightning = {
+        bolts: [],
+        maxBolts: 3,
+        nextStrikeTime: Date.now() + 2000,
+        thunderSounds: [],
+        
+        createBolt: function(startPoint, endPoint, segments, width, color) {
+            // Create points for lightning path
+            const points = [startPoint.clone()];
+            const mainDirection = endPoint.clone().sub(startPoint);
+            const length = mainDirection.length();
+            
+            // Add random points along the path
+            for (let i = 1; i < segments; i++) {
+                const ratio = i / segments;
+                const position = startPoint.clone().add(mainDirection.clone().multiplyScalar(ratio));
+                
+                // Add random offset perpendicular to main direction
+                const offset = new THREE.Vector3(
+                    Math.random() - 0.5,
+                    Math.random() - 0.5,
+                    Math.random() - 0.5
+                ).multiplyScalar(length * 0.1 * (1 - ratio)); // Less offset toward the end
+                
+                position.add(offset);
+                points.push(position);
+            }
+            
+            // Add end point
+            points.push(endPoint.clone());
+            
+            // Create geometry and material
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({ 
+                color: color,
+                transparent: true,
+                opacity: 1.0,
+                linewidth: width // Note: Line width may not work in WebGL
+            });
+            
+            const bolt = new THREE.Line(geometry, material);
+            bolt.life = 0.5; // Duration in seconds
+            this.bolts.push(bolt);
+            scene.add(bolt);
+            
+            // Flash effect for lightning
+            const flash = new THREE.PointLight(0xaaddff, 5, 100);
+            flash.position.copy(endPoint);
+            scene.add(flash);
+            
+            // Animate flash
+            gsap.to(flash, {
+                intensity: 0,
+                duration: 0.1,
+                onComplete: () => {
+                    scene.remove(flash);
+                }
+            });
+            
+            // Play thunder sound with delay
+            this.playThunder();
+        },
+        
+        playThunder: function() {
+            // Create thunder sound
+            const thunderDelay = Math.random() * 2000 + 500; // 0.5-2.5 second delay
+            
+            setTimeout(() => {
+                // Create audio for thunder
+                const thunder = new Audio();
+                // Random choice of thunder sounds
+                const thunderOptions = [
+                    'https://assets.mixkit.co/sfx/preview/mixkit-distant-thunder-explosion-1278.mp3',
+                    'https://assets.mixkit.co/sfx/preview/mixkit-thunder-deep-rumble-1296.mp3',
+                    'https://assets.mixkit.co/sfx/preview/mixkit-lightning-explosion-rumble-1304.mp3'
+                ];
+                thunder.src = thunderOptions[Math.floor(Math.random() * thunderOptions.length)];
+                thunder.volume = Math.random() * 0.3 + 0.2; // Random volume
+                thunder.play().catch(e => console.log('Thunder audio error (ignorable):', e));
+                
+                // Store sound reference
+                this.thunderSounds.push(thunder);
+                
+                // Remove reference after playing
+                thunder.onended = () => {
+                    const index = this.thunderSounds.indexOf(thunder);
+                    if (index > -1) {
+                        this.thunderSounds.splice(index, 1);
+                    }
+                };
+            }, thunderDelay);
+        },
+        
+        strike: function() {
+            // Remove old bolts
+            for (let i = this.bolts.length - 1; i >= 0; i--) {
+                if (this.bolts[i].life <= 0) {
+                    scene.remove(this.bolts[i]);
+                    this.bolts.splice(i, 1);
+                }
+            }
+            
+            // Limit max bolts
+            if (this.bolts.length >= this.maxBolts) return;
+            
+            // Create random start and end points in the background
+            const startPoint = new THREE.Vector3(
+                (Math.random() - 0.5) * 150,
+                50 + Math.random() * 20,
+                -70 - Math.random() * 30
+            );
+            
+            const endPoint = new THREE.Vector3(
+                startPoint.x + (Math.random() - 0.5) * 20,
+                -50 - Math.random() * 20,
+                startPoint.z + (Math.random() - 0.5) * 20
+            );
+            
+            // Add branches
+            this.createBolt(
+                startPoint,
+                endPoint,
+                5 + Math.floor(Math.random() * 5), // Random segments
+                2,
+                new THREE.Color(0xaaddff)
+            );
+            
+            // Add random branches
+            const numBranches = Math.floor(Math.random() * 3) + 1;
+            for (let i = 0; i < numBranches; i++) {
+                // Pick a random point along the main bolt
+                const ratio = Math.random() * 0.6 + 0.2; // 20-80% along the main bolt
+                const branchStart = new THREE.Vector3().lerpVectors(startPoint, endPoint, ratio);
+                
+                // Create a branch end point
+                const branchEnd = new THREE.Vector3(
+                    branchStart.x + (Math.random() - 0.5) * 30,
+                    branchStart.y - Math.random() * 30,
+                    branchStart.z + (Math.random() - 0.5) * 30
+                );
+                
+                this.createBolt(
+                    branchStart,
+                    branchEnd,
+                    3 + Math.floor(Math.random() * 3), // Fewer segments for branches
+                    1,
+                    new THREE.Color(0x55ddff)
+                );
+            }
+            
+            // Set next strike time - cluster lightning occasionally
+            if (Math.random() < 0.3) { // 30% chance of a quick follow-up strike
+                this.nextStrikeTime = Date.now() + Math.random() * 500 + 200; // 0.2-0.7 seconds
+            } else {
+                this.nextStrikeTime = Date.now() + Math.random() * 8000 + 3000; // 3-11 seconds
+            }
+        },
+        
+        update: function() {
+            // Update existing bolts
+            for (const bolt of this.bolts) {
+                bolt.life -= 0.016; // Roughly one frame at 60fps
+                bolt.material.opacity = bolt.life * 2; // Fade out
+            }
+            
+            // Check if time for a new bolt
+            if (Date.now() > this.nextStrikeTime) {
+                this.strike();
+            }
+        }
+    };
+    
+    // Add dynamic lights to orbit around the center
+    window.orbitLights = [];
+    for (let i = 0; i < 3; i++) {
+        const light = new THREE.PointLight(
+            new THREE.Color(
+                Math.random() * 0.3 + 0.7, 
+                Math.random() * 0.3 + 0.7, 
+                Math.random() * 0.3 + 0.7
+            ),
+            1,
+            100
+        );
+        
+        light.angle = Math.random() * Math.PI * 2;
+        light.speed = 0.2 + Math.random() * 0.3;
+        light.radius = 10 + Math.random() * 20;
+        light.height = Math.random() * 20 - 10;
+        
+        window.orbitLights.push(light);
+        scene.add(light);
+    }
+
+    // Add new effects
+    createCosmicPortal();
+    createFloatingCrystals();
+    createEnergyField();
+    createPlasmaField();
+    createEnergyBeams();
+    createHolographicRings();
+    createQuantumTunnel();
+    createDNAHelix();
+    createCosmicDust();
+    createVortex();
+    
+    // Enhance nebula colors
+    nebulaMaterial.uniforms.color1.value = new THREE.Color(0x00ffff);
+    nebulaMaterial.uniforms.color2.value = new THREE.Color(0xff1493);
+    
+    // Add more dynamic lights
+    const spotLight = new THREE.SpotLight(0x00ffff, 2);
+    spotLight.position.set(0, 30, 0);
+    spotLight.angle = Math.PI / 6;
+    spotLight.penumbra = 0.5;
+    scene.add(spotLight);
+    window.spotLight = spotLight;
 }
 
 // Track if init has been called
@@ -1545,4 +1958,622 @@ function createEarth() {
 }
 
 // Create Earth
-createEarth(); 
+createEarth();
+
+// Add cosmic portal effect
+function createCosmicPortal() {
+    const portalGeometry = new THREE.TorusGeometry(12, 2, 30, 100);
+    const portalMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            portalColor1: { value: new THREE.Color(0x00ffff) },
+            portalColor2: { value: new THREE.Color(0xff00ff) }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            void main() {
+                vUv = uv;
+                vPosition = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform float time;
+            uniform vec3 portalColor1;
+            uniform vec3 portalColor2;
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            
+            float noise(vec2 p) {
+                return sin(p.x * 10.0 + time) * sin(p.y * 10.0 + time);
+            }
+            
+            void main() {
+                float distFromCenter = length(vPosition.xy) / 12.0;
+                float angle = atan(vPosition.y, vPosition.x);
+                
+                // Create swirling effect
+                float swirl = sin(angle * 10.0 + time * 2.0 + distFromCenter * 20.0);
+                
+                // Add electric-like noise
+                float noise1 = noise(vUv * 5.0 + time);
+                float noise2 = noise(vUv * 10.0 - time * 0.5);
+                
+                // Combine effects
+                vec3 color = mix(portalColor1, portalColor2, swirl * noise1 * noise2);
+                
+                // Add energy pulse
+                float pulse = 0.5 + 0.5 * sin(time * 3.0);
+                color += vec3(0.2, 0.5, 1.0) * pulse;
+                
+                // Edge glow
+                float edgeGlow = pow(1.0 - abs(distFromCenter - 0.5), 3.0);
+                color += vec3(0.0, 0.5, 1.0) * edgeGlow;
+                
+                float alpha = min(1.0, edgeGlow + 0.3);
+                gl_FragColor = vec4(color, alpha);
+            }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+    });
+
+    const portal = new THREE.Mesh(portalGeometry, portalMaterial);
+    portal.position.z = -50;
+    portal.rotation.x = Math.PI / 4;
+    scene.add(portal);
+    window.portal = portal;
+}
+
+// Add floating crystals effect
+function createFloatingCrystals() {
+    const crystals = [];
+    const crystalCount = 20;
+    
+    for (let i = 0; i < crystalCount; i++) {
+        const geometry = new THREE.OctahedronGeometry(Math.random() * 0.5 + 0.5);
+        const material = new THREE.MeshPhysicalMaterial({
+            color: new THREE.Color(Math.random(), Math.random(), 1),
+            metalness: 0.9,
+            roughness: 0.1,
+            transmission: 0.5,
+            thickness: 0.5,
+            envMapIntensity: 1,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const crystal = new THREE.Mesh(geometry, material);
+        
+        // Random position in a sphere
+        const radius = 20;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(Math.random() * 2 - 1);
+        
+        crystal.position.x = radius * Math.sin(phi) * Math.cos(theta);
+        crystal.position.y = radius * Math.sin(phi) * Math.sin(theta);
+        crystal.position.z = radius * Math.cos(phi) - 30;
+        
+        // Store original position and random rotation speed
+        crystal.userData.originalPosition = crystal.position.clone();
+        crystal.userData.rotationSpeed = {
+            x: Math.random() * 0.02 - 0.01,
+            y: Math.random() * 0.02 - 0.01,
+            z: Math.random() * 0.02 - 0.01
+        };
+        crystal.userData.floatSpeed = Math.random() * 0.005 + 0.002;
+        crystal.userData.floatOffset = Math.random() * Math.PI * 2;
+        
+        scene.add(crystal);
+        crystals.push(crystal);
+    }
+    window.crystals = crystals;
+}
+
+// Add energy field effect
+function createEnergyField() {
+    const fieldGeometry = new THREE.SphereGeometry(25, 32, 32);
+    const fieldMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            energyColor: { value: new THREE.Color(0x00ffff) }
+        },
+        vertexShader: `
+            varying vec3 vPosition;
+            varying vec2 vUv;
+            void main() {
+                vPosition = position;
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform float time;
+            uniform vec3 energyColor;
+            varying vec3 vPosition;
+            varying vec2 vUv;
+            
+            void main() {
+                vec3 pos = normalize(vPosition);
+                float pattern = sin(pos.x * 20.0 + time) * sin(pos.y * 20.0 + time) * sin(pos.z * 20.0 + time);
+                pattern = abs(pattern);
+                
+                float energyLines = abs(sin(vUv.y * 50.0 + time * 2.0)) * abs(sin(vUv.x * 50.0 - time));
+                
+                vec3 color = energyColor * (pattern + energyLines);
+                float alpha = pattern * 0.3 + energyLines * 0.1;
+                
+                gl_FragColor = vec4(color, alpha);
+            }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+    });
+
+    const energyField = new THREE.Mesh(fieldGeometry, fieldMaterial);
+    energyField.position.z = -40;
+    scene.add(energyField);
+    window.energyField = energyField;
+}
+
+// Add plasma field effect
+function createPlasmaField() {
+    const plasmaGeometry = new THREE.IcosahedronGeometry(30, 3);
+    const plasmaMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            plasmaColor1: { value: new THREE.Color(0x0088ff) },
+            plasmaColor2: { value: new THREE.Color(0xff1493) }
+        },
+        vertexShader: `
+            varying vec3 vPosition;
+            varying vec2 vUv;
+            void main() {
+                vPosition = position;
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform float time;
+            uniform vec3 plasmaColor1;
+            uniform vec3 plasmaColor2;
+            varying vec3 vPosition;
+            varying vec2 vUv;
+            
+            float plasma(vec3 p) {
+                float v = 0.0;
+                v += sin((p.x + time) * 10.0) * 0.5;
+                v += sin((p.y + time * 0.5) * 10.0) * 0.5;
+                v += sin((p.z + time * 0.7) * 10.0) * 0.5;
+                v += sin(sqrt(p.x * p.x + p.y * p.y + p.z * p.z) * 10.0 - time * 2.0);
+                return v;
+            }
+            
+            void main() {
+                vec3 pos = normalize(vPosition);
+                float v = plasma(pos);
+                
+                vec3 color = mix(plasmaColor1, plasmaColor2, v * 0.5 + 0.5);
+                float alpha = 0.3 * (0.5 + 0.5 * sin(v * 5.0 + time));
+                
+                gl_FragColor = vec4(color, alpha);
+            }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+    });
+
+    const plasmaField = new THREE.Mesh(plasmaGeometry, plasmaMaterial);
+    plasmaField.position.z = -60;
+    scene.add(plasmaField);
+    window.plasmaField = plasmaField;
+}
+
+// Add energy beams
+function createEnergyBeams() {
+    const beams = [];
+    const beamCount = 8;
+    
+    for (let i = 0; i < beamCount; i++) {
+        const angle = (i / beamCount) * Math.PI * 2;
+        const radius = 15;
+        
+        const beamGeometry = new THREE.CylinderGeometry(0.1, 0.1, 20, 8);
+        const beamMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                beamColor: { value: new THREE.Color(0x00ffff) }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float time;
+                uniform vec3 beamColor;
+                varying vec2 vUv;
+                
+                void main() {
+                    float energy = abs(sin(vUv.y * 20.0 + time * 5.0));
+                    vec3 color = beamColor * (0.5 + 0.5 * energy);
+                    float alpha = energy * 0.7;
+                    gl_FragColor = vec4(color, alpha);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+
+        const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+        
+        beam.position.x = Math.cos(angle) * radius;
+        beam.position.y = 0;
+        beam.position.z = Math.sin(angle) * radius - 40;
+        
+        beam.rotation.z = Math.PI / 2;
+        beam.rotation.y = -angle;
+        
+        beam.userData.angle = angle;
+        beam.userData.radius = radius;
+        
+        scene.add(beam);
+        beams.push(beam);
+    }
+    window.energyBeams = beams;
+}
+
+// Add holographic rings
+function createHolographicRings() {
+    const rings = [];
+    const ringCount = 3;
+    
+    for (let i = 0; i < ringCount; i++) {
+        const radius = 8 + i * 4;
+        const ringGeometry = new THREE.TorusGeometry(radius, 0.2, 16, 100);
+        const ringMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                ringColor: { value: new THREE.Color(0x00ffff) }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float time;
+                uniform vec3 ringColor;
+                varying vec2 vUv;
+                
+                void main() {
+                    float pattern = abs(sin(vUv.x * 50.0 + time * 2.0));
+                    vec3 color = ringColor * (0.5 + 0.5 * pattern);
+                    float alpha = pattern * 0.5;
+                    gl_FragColor = vec4(color, alpha);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            side: THREE.DoubleSide
+        });
+
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        ring.position.z = -35;
+        ring.rotation.x = Math.PI / 4;
+        
+        scene.add(ring);
+        rings.push(ring);
+    }
+    window.holographicRings = rings;
+}
+
+// Add quantum tunnel effect
+function createQuantumTunnel() {
+    const tunnelGeometry = new THREE.CylinderGeometry(10, 10, 100, 32, 32, true);
+    const tunnelMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            tunnelColor1: { value: new THREE.Color(0x00ffff) },
+            tunnelColor2: { value: new THREE.Color(0xff1493) }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            void main() {
+                vUv = uv;
+                vPosition = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform float time;
+            uniform vec3 tunnelColor1;
+            uniform vec3 tunnelColor2;
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            
+            float pattern(vec2 p) {
+                return sin(p.x * 10.0 + time * 0.5);
+            }
+            
+            void main() {
+                vec2 pos = vUv * 2.0 - 1.0;
+                float dist = length(pos);
+                
+                // Create spiral effect
+                float angle = atan(pos.y, pos.x);
+                float spiral = sin(angle * 10.0 + dist * 20.0 - time * 3.0);
+                
+                // Add quantum noise
+                float noise = pattern(vUv * 5.0);
+                float quantumEffect = sin(spiral * 3.0 + noise + time);
+                
+                // Color mix with quantum interference
+                vec3 color = mix(tunnelColor1, tunnelColor2, quantumEffect * 0.5 + 0.5);
+                
+                // Add energy waves
+                float waves = sin(dist * 20.0 - time * 2.0) * 0.5 + 0.5;
+                color += vec3(0.2, 0.5, 1.0) * waves;
+                
+                // Edge glow
+                float edge = 1.0 - abs(dist - 0.5) * 2.0;
+                edge = pow(edge, 3.0);
+                
+                float alpha = edge * (0.5 + 0.5 * quantumEffect);
+                gl_FragColor = vec4(color, alpha * 0.5);
+            }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+    });
+
+    const tunnel = new THREE.Mesh(tunnelGeometry, tunnelMaterial);
+    tunnel.rotation.x = Math.PI / 2;
+    tunnel.position.z = -80;
+    scene.add(tunnel);
+    window.quantumTunnel = tunnel;
+}
+
+// Add DNA helix effect
+function createDNAHelix() {
+    const helixGroup = new THREE.Group();
+    const strandCount = 2;
+    const pointsPerStrand = 100;
+    const radius = 5;
+    const height = 30;
+    const rotations = 4;
+    
+    for (let strand = 0; strand < strandCount; strand++) {
+        const points = [];
+        for (let i = 0; i < pointsPerStrand; i++) {
+            const angle = (i / pointsPerStrand) * Math.PI * 2 * rotations + (strand * Math.PI);
+            const y = (i / pointsPerStrand) * height - height/2;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            points.push(new THREE.Vector3(x, y, z));
+        }
+        
+        const curve = new THREE.CatmullRomCurve3(points);
+        const tubeGeometry = new THREE.TubeGeometry(curve, 100, 0.3, 8, false);
+        const tubeMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                baseColor: { value: new THREE.Color(strand === 0 ? 0x00ffff : 0xff1493) }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying vec3 vPosition;
+                void main() {
+                    vUv = uv;
+                    vPosition = position;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float time;
+                uniform vec3 baseColor;
+                varying vec2 vUv;
+                varying vec3 vPosition;
+                
+                void main() {
+                    float energy = abs(sin(vUv.x * 30.0 + time * 3.0));
+                    vec3 color = baseColor * (0.5 + 0.5 * energy);
+                    float alpha = 0.7 + 0.3 * energy;
+                    gl_FragColor = vec4(color, alpha);
+                }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+        helixGroup.add(tube);
+        
+        // Add connecting segments (base pairs)
+        for (let i = 0; i < pointsPerStrand; i += 5) {
+            const angle = (i / pointsPerStrand) * Math.PI * 2 * rotations;
+            const y = (i / pointsPerStrand) * height - height/2;
+            const x1 = Math.cos(angle) * radius;
+            const z1 = Math.sin(angle) * radius;
+            const x2 = Math.cos(angle + Math.PI) * radius;
+            const z2 = Math.sin(angle + Math.PI) * radius;
+            
+            const baseGeometry = new THREE.CylinderGeometry(0.1, 0.1, radius * 2, 8);
+            const baseMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0 },
+                    baseColor: { value: new THREE.Color(0xffffff) }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float time;
+                    uniform vec3 baseColor;
+                    varying vec2 vUv;
+                    
+                    void main() {
+                        float pulse = sin(vUv.y * 10.0 + time * 5.0) * 0.5 + 0.5;
+                        vec3 color = baseColor * pulse;
+                        float alpha = 0.3 + 0.2 * pulse;
+                        gl_FragColor = vec4(color, alpha);
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const base = new THREE.Mesh(baseGeometry, baseMaterial);
+            base.position.set((x1 + x2)/2, y, (z1 + z2)/2);
+            base.lookAt(x2, y, z2);
+            base.rotateX(Math.PI/2);
+            helixGroup.add(base);
+        }
+    }
+    
+    helixGroup.position.z = -50;
+    scene.add(helixGroup);
+    window.dnaHelix = helixGroup;
+}
+
+// Add cosmic dust particles
+function createCosmicDust() {
+    const particleCount = 2000;
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const sizes = new Float32Array(particleCount);
+    
+    for (let i = 0; i < particleCount; i++) {
+        const radius = 50 + Math.random() * 50;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(Math.random() * 2 - 1);
+        
+        positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+        positions[i * 3 + 2] = radius * Math.cos(phi) - 50;
+        
+        const color = new THREE.Color();
+        color.setHSL(Math.random(), 0.8, 0.8);
+        colors[i * 3] = color.r;
+        colors[i * 3 + 1] = color.g;
+        colors[i * 3 + 2] = color.b;
+        
+        sizes[i] = Math.random() * 2;
+    }
+    
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    
+    const material = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            pointTexture: { value: new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png') }
+        },
+        vertexShader: `
+            attribute float size;
+            varying vec3 vColor;
+            uniform float time;
+            
+            void main() {
+                vColor = color;
+                vec3 pos = position;
+                
+                // Add swirling motion
+                float angle = time * 0.2;
+                float radius = length(pos.xz);
+                float theta = atan(pos.z, pos.x) + angle * (1.0 - radius / 100.0);
+                pos.x = radius * cos(theta);
+                pos.z = radius * sin(theta);
+                
+                // Add vertical wave motion
+                pos.y += sin(time + radius * 0.02) * 5.0;
+                
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                gl_PointSize = size * (300.0 / -mvPosition.z);
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D pointTexture;
+            varying vec3 vColor;
+            
+            void main() {
+                gl_FragColor = vec4(vColor, 1.0) * texture2D(pointTexture, gl_PointCoord);
+            }
+        `,
+        blending: THREE.AdditiveBlending,
+        depthTest: false,
+        transparent: true,
+        vertexColors: true
+    });
+    
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+    window.cosmicDust = particles;
+}
+
+// Add vortex effect
+function createVortex() {
+    const vortexGeometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+    const vortexMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            vortexColor1: { value: new THREE.Color(0x00ffff) },
+            vortexColor2: { value: new THREE.Color(0xff1493) }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            void main() {
+                vUv = uv;
+                vPosition = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform float time;
+            uniform vec3 vortexColor1;
+            uniform vec3 vortexColor2;
+            varying vec2 vUv;
+            varying vec3 vPosition;
+            
+            void main() {
+                float noise = sin(vUv.x * 20.0 + time) * sin(vUv.y * 20.0 + time);
+                float twist = sin(atan(vPosition.y, vPosition.x) * 5.0 + time * 2.0);
+                float pattern = noise * twist;
+                
+                vec3 color = mix(vortexColor1, vortexColor2, pattern * 0.5 + 0.5);
+                float alpha = 0.5 * (0.5 + 0.5 * sin(pattern * 5.0 + time));
+                
+                gl_FragColor = vec4(color, alpha);
+            }
+        `,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide
+    });
+    
+    const vortex = new THREE.Mesh(vortexGeometry, vortexMaterial);
+    vortex.position.z = -70;
+    scene.add(vortex);
+    window.vortex = vortex;
+}
