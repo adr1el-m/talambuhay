@@ -432,7 +432,6 @@ scene.add(directionalLight);
 function createSlide() {
     if (!font) return; // Don't create slide if font isn't loaded yet
 
-<<<<<<< HEAD
     // Store the previous slide mesh before removing it
     const oldSlideMesh = slideMesh;
     let oldVideoElement = window.videoElement;
@@ -454,23 +453,6 @@ function createSlide() {
     
     // Set the new slideMesh reference
     slideMesh = slideGroup;
-=======
-    // Remove existing meshes
-    if (slideMesh) scene.remove(slideMesh);
-    if (titleMesh) scene.remove(titleMesh);
-    if (contentMesh) scene.remove(contentMesh);
-    if (window.imageMesh) scene.remove(window.imageMesh);
-    if (window.videoMesh) scene.remove(window.videoMesh);
-    if (window.videoElement && window.videoElement.parentNode) {
-        window.videoElement.pause();
-        window.videoElement.remove();
-    }
-
-    // Create a single slide with all elements as children
-    const slideGroup = new THREE.Group();
-    scene.add(slideGroup);
-    slideMesh = slideGroup; // Store reference to the group
->>>>>>> ab9015dc7319ea9877e899b6e7bad5e1f03093a2
 
     // Check if this is a video slide
     const isVideoSlide = slides[currentSlide].hasVideo && slides[currentSlide].videoPath;
@@ -528,13 +510,9 @@ function createSlide() {
                 }
             `,
             depthTest: true,
-<<<<<<< HEAD
             depthWrite: true,
             transparent: true,
             opacity: 0
-=======
-            depthWrite: true
->>>>>>> ab9015dc7319ea9877e899b6e7bad5e1f03093a2
         });
         
         // Create mesh with custom shader material
@@ -563,10 +541,7 @@ function createSlide() {
             color: 0x111111,
             side: THREE.DoubleSide,
             transparent: true,
-<<<<<<< HEAD
             opacity: 0
-=======
->>>>>>> ab9015dc7319ea9877e899b6e7bad5e1f03093a2
         });
         const backgroundMesh = new THREE.Mesh(geometry, material);
         slideGroup.add(backgroundMesh);
@@ -593,13 +568,9 @@ function createSlide() {
                 const imageGeometry = new THREE.PlaneGeometry(imageWidth, imageHeight);
                 const imageMaterial = new THREE.MeshBasicMaterial({ 
                     map: texture,
-<<<<<<< HEAD
                     side: THREE.DoubleSide,
                     transparent: true,
                     opacity: 0
-=======
-                    side: THREE.DoubleSide
->>>>>>> ab9015dc7319ea9877e899b6e7bad5e1f03093a2
                 });
                 const imageMesh = new THREE.Mesh(imageGeometry, imageMaterial);
                 
@@ -625,10 +596,7 @@ function createSlide() {
         color: slides[currentSlide].color,
         side: THREE.DoubleSide,
         transparent: true,
-<<<<<<< HEAD
         opacity: 0
-=======
->>>>>>> ab9015dc7319ea9877e899b6e7bad5e1f03093a2
     });
     const borderMesh = new THREE.Mesh(borderGeometry, borderMaterial);
     borderMesh.position.z = -0.05;
@@ -644,13 +612,9 @@ function createSlide() {
         const titleMaterial = new THREE.MeshPhongMaterial({ 
             color: 0xffffff,
             emissive: 0x333333,
-<<<<<<< HEAD
             shininess: 100,
             transparent: true,
             opacity: 0
-=======
-            shininess: 100
->>>>>>> ab9015dc7319ea9877e899b6e7bad5e1f03093a2
         });
         titleMesh = new THREE.Mesh(titleGeometry, titleMaterial);
         titleGeometry.computeBoundingBox();
@@ -669,13 +633,9 @@ function createSlide() {
         const contentMaterial = new THREE.MeshPhongMaterial({ 
             color: 0xffffff,
             emissive: 0x333333,
-<<<<<<< HEAD
             shininess: 100,
             transparent: true,
             opacity: 0
-=======
-            shininess: 100
->>>>>>> ab9015dc7319ea9877e899b6e7bad5e1f03093a2
         });
         contentMesh = new THREE.Mesh(contentGeometry, contentMaterial);
         contentGeometry.computeBoundingBox();
@@ -693,63 +653,68 @@ function createSlide() {
     
     // Update interactive elements
     updateInteractiveElements();
-<<<<<<< HEAD
     
     // Now perform the fade transition using GSAP
     if (oldSlideMesh) {
-        // Fade out the old slide
+        // First hide the old slide
         gsap.to(oldSlideMesh.position, {
-            duration: 0.5,
+            duration: 0.4,
             z: -1,
             ease: "power2.in"
         });
         
-        // Traverse all children of the old slide and fade them out
+        // Hide the old slide materials quickly
         oldSlideMesh.traverse(child => {
             if (child.material && typeof child.material.opacity !== 'undefined') {
                 gsap.to(child.material, {
                     opacity: 0,
-                    duration: 0.5,
+                    duration: 0.3,
                     ease: "power2.in",
                     onComplete: function() {
-                        // Remove old slide from scene once faded out
-                        scene.remove(oldSlideMesh);
-                        // Clean up old video element
-                        if (oldVideoElement && oldVideoElement !== window.videoElement && oldVideoElement.parentNode) {
-                            oldVideoElement.pause();
-                            oldVideoElement.remove();
+                        if (child === oldSlideMesh.children[oldSlideMesh.children.length - 1]) {
+                            // Clean up old slide and video when fade out completes
+                            scene.remove(oldSlideMesh);
+                            if (oldVideoElement && oldVideoElement !== window.videoElement && oldVideoElement.parentNode) {
+                                oldVideoElement.pause();
+                                oldVideoElement.remove();
+                            }
                         }
                     }
                 });
             }
         });
+        
+        // Simply fade in the new slide
+        gsap.fromTo(slideGroup.position, 
+            { z: 0.5 },
+            { z: 0, duration: 0.4, ease: "power2.out", delay: 0.2 }
+        );
+        
+        // Fade in all materials of the new slide
+        slideGroup.traverse(child => {
+            if (child.material && typeof child.material.opacity !== 'undefined') {
+                const targetOpacity = child.material.originalOpacity || 1.0;
+                gsap.to(child.material, {
+                    opacity: targetOpacity,
+                    duration: 0.5,
+                    ease: "power2.out",
+                    delay: 0.2
+                });
+            }
+        });
+    } else {
+        // For the first slide, just make it visible without animation
+        slideGroup.traverse(child => {
+            if (child.material && typeof child.material.opacity !== 'undefined') {
+                const targetOpacity = child.material.originalOpacity || 1.0;
+                gsap.to(child.material, {
+                    opacity: targetOpacity,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+            }
+        });
     }
-    
-    // Fade in the new slide
-    gsap.fromTo(slideGroup.position, 
-        { z: 1 },
-        {
-            z: 0,
-            duration: 0.5,
-            ease: "power2.out",
-            delay: 0.2
-        }
-    );
-    
-    // Traverse all children of the new slide and fade them in
-    slideGroup.traverse(child => {
-        if (child.material && typeof child.material.opacity !== 'undefined') {
-            const targetOpacity = child.material.originalOpacity || 1.0;
-            gsap.to(child.material, {
-                opacity: targetOpacity,
-                duration: 0.5,
-                ease: "power2.out",
-                delay: 0.2
-            });
-        }
-    });
-=======
->>>>>>> ab9015dc7319ea9877e899b6e7bad5e1f03093a2
 }
 
 // Function to create a fallback image if loading fails
