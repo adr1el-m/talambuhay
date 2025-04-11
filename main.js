@@ -3,20 +3,17 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 
-// Scene setup
+// Scene setup with improved fog for depth perception
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000022); // Very dark blue background
+scene.fog = new THREE.FogExp2(0x000033, 0.001); // Add subtle fog for depth
 
 // Create starfield background
 const starGeometry = new THREE.BufferGeometry();
-const starMaterial = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 0.1,
-    transparent: true,
-});
-
 const starVertices = [];
-for (let i = 0; i < 20000; i++) {
+
+// Generate a lot more stars for better visibility
+for (let i = 0; i < 40000; i++) {
     const x = (Math.random() - 0.5) * 2000;
     const y = (Math.random() - 0.5) * 2000;
     const z = (Math.random() - 0.5) * 2000;
@@ -24,51 +21,65 @@ for (let i = 0; i < 20000; i++) {
 }
 
 starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+
+// Create simple but effective star material
+const starMaterial = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 0.3,    // Larger size for better visibility
+    transparent: true,
+    opacity: 0.8
+});
+
 const stars = new THREE.Points(starGeometry, starMaterial);
 scene.add(stars);
 
-// Add second layer of stars with different size for depth
+// Add second layer of brighter blue-tinted stars
 const starGeometry2 = new THREE.BufferGeometry();
-const starMaterial2 = new THREE.PointsMaterial({
-    color: 0xaaccff, // Slightly blue tint
-    size: 0.15,      // Slightly larger
-    transparent: true,
-});
-
 const starVertices2 = [];
-for (let i = 0; i < 5000; i++) {
-    const x = (Math.random() - 0.5) * 1500;
-    const y = (Math.random() - 0.5) * 1500;
-    const z = (Math.random() - 0.5) * 1500;
+
+for (let i = 0; i < 10000; i++) {
+    const x = (Math.random() - 0.5) * 1800;
+    const y = (Math.random() - 0.5) * 1800;
+    const z = (Math.random() - 0.5) * 1800;
     starVertices2.push(x, y, z);
 }
 
 starGeometry2.setAttribute('position', new THREE.Float32BufferAttribute(starVertices2, 3));
+
+const starMaterial2 = new THREE.PointsMaterial({
+    color: 0xaaccff, // Slightly blue tint
+    size: 0.4,      // Larger size
+    transparent: true,
+    opacity: 0.9
+});
+
 const stars2 = new THREE.Points(starGeometry2, starMaterial2);
 scene.add(stars2);
 
-// Add third layer with bright prominent stars
+// Add third layer with larger prominent stars
 const starGeometry3 = new THREE.BufferGeometry();
-const starMaterial3 = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 0.3,       // Much larger for prominent stars
-    transparent: true,
-
-});
-
 const starVertices3 = [];
-for (let i = 0; i < 200; i++) {
-    const x = (Math.random() - 0.5) * 1000;
-    const y = (Math.random() - 0.5) * 1000;
-    const z = (Math.random() - 0.5) * 1000;
+
+for (let i = 0; i < 1000; i++) {
+    const x = (Math.random() - 0.5) * 1500;
+    const y = (Math.random() - 0.5) * 1500;
+    const z = (Math.random() - 0.5) * 1500;
     starVertices3.push(x, y, z);
 }
 
 starGeometry3.setAttribute('position', new THREE.Float32BufferAttribute(starVertices3, 3));
+
+const starMaterial3 = new THREE.PointsMaterial({
+    color: 0xffffff,
+    size: 0.8,      // Much larger for visibility
+    transparent: true,
+    opacity: 1.0
+});
+
 const stars3 = new THREE.Points(starGeometry3, starMaterial3);
 scene.add(stars3);
 
-// Add nebula effect
+// Add nebula effect with improved shader
 const nebulaGeometry = new THREE.SphereGeometry(500, 32, 32);
 const nebulaMaterial = new THREE.ShaderMaterial({
     uniforms: {
@@ -92,47 +103,47 @@ const nebulaMaterial = new THREE.ShaderMaterial({
         varying vec2 vUv;
         varying vec3 vPosition;
         
-        // Improved noise function
-        float random(vec2 st) {
-            return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+        // Improved noise function with better performance
+        float hash(float n) {
+            return fract(sin(n) * 43758.5453);
         }
         
-        // Smoother noise
-        float noise(vec2 st) {
-            vec2 i = floor(st);
-            vec2 f = fract(st);
+        float noise(vec3 x) {
+            vec3 p = floor(x);
+            vec3 f = fract(x);
+            f = f * f * (3.0 - 2.0 * f);
             
-            // Four corners in 2D of a tile
-            float a = random(i);
-            float b = random(i + vec2(1.0, 0.0));
-            float c = random(i + vec2(0.0, 1.0));
-            float d = random(i + vec2(1.0, 1.0));
-            
-            // Smooth interpolation
-            vec2 u = f * f * (3.0 - 2.0 * f);
-            
-            return mix(a, b, u.x) +
-                    (c - a) * u.y * (1.0 - u.x) +
-                    (d - b) * u.x * u.y;
+            float n = p.x + p.y * 57.0 + p.z * 113.0;
+            return mix(
+                mix(
+                    mix(hash(n + 0.0), hash(n + 1.0), f.x),
+                    mix(hash(n + 57.0), hash(n + 58.0), f.x),
+                    f.y),
+                mix(
+                    mix(hash(n + 113.0), hash(n + 114.0), f.x),
+                    mix(hash(n + 170.0), hash(n + 171.0), f.x),
+                    f.y),
+                f.z);
         }
         
         void main() {
-            // Use 3D position instead of just UV for more natural pattern
+            // Create more dynamic, flowing nebula
             vec3 pos = normalize(vPosition);
+            float noiseScale = 1.5; // Larger scale patterns
             
-            // Create multiple noise layers at different scales
-            float noiseVal = noise(pos.xy * 10.0 + time * 0.1) * 0.5 +
-                             noise(pos.xy * 20.0 - time * 0.05) * 0.3 +
-                             noise(pos.xy * 40.0 + time * 0.2) * 0.2;
+            float noiseVal = 
+                noise(pos * 8.0 * noiseScale + time * 0.1) * 0.5 +
+                noise(pos * 16.0 * noiseScale - time * 0.05) * 0.25 +
+                noise(pos * 32.0 * noiseScale + time * 0.2) * 0.125;
             
-            // Smooth the pattern for more natural transition
-            float pattern = 0.5 + 0.5 * sin(noiseVal * 3.14159 + time);
+            float pattern = 0.5 + 0.5 * sin(noiseVal * 6.28 + time * 0.5);
             
-            // Gradient mix with smoothstep for soft transition
+            // Improved color blending with more contrast
             vec3 color = mix(color1, color2, smoothstep(0.2, 0.8, pattern));
             
-            // Add subtle depth with position
-            float alpha = 0.3 * (0.8 + 0.2 * noise(pos.xy * 5.0));
+            // Add depth and glow
+            float glow = pow(noiseVal, 2.0) * 0.5 + 0.2;
+            float alpha = glow * 0.35; // Slightly more transparent for performance
             
             gl_FragColor = vec4(color, alpha);
         }
@@ -143,12 +154,20 @@ const nebulaMaterial = new THREE.ShaderMaterial({
 const nebula = new THREE.Mesh(nebulaGeometry, nebulaMaterial);
 scene.add(nebula);
 
+// Improved camera settings
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+camera.position.z = 8;
+
+// Renderer with post-processing
+const renderer = new THREE.WebGLRenderer({ 
+    antialias: true,
+    powerPreference: "high-performance"
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
 document.body.appendChild(renderer.domElement);
 
-// Add orbit controls for interactive camera movement
+// Add orbit controls with improved settings
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
@@ -156,6 +175,20 @@ controls.enableZoom = true;
 controls.minDistance = 1;
 controls.maxDistance = 30;
 controls.maxPolarAngle = Math.PI / 2;
+controls.autoRotateSpeed = 0.5;
+
+// Improved lighting
+const ambientLight = new THREE.AmbientLight(0x333366, 0.5); // Slightly blue ambient
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+directionalLight.position.set(5, 5, 5);
+scene.add(directionalLight);
+
+// Add dynamic light for dramatic effect
+const movingLight = new THREE.PointLight(0x0066ff, 1, 50);
+movingLight.position.set(0, 0, 15);
+scene.add(movingLight);
 
 // Create navigation controls
 const navContainer = document.createElement('div');
@@ -224,53 +257,53 @@ nextButton.addEventListener('click', nextSlide);
 // Slides content
 const slides = [
     { // Pangalan
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/s1.mp4"
     },
 
     { // Saan nagmula ang aking pangalan
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/s2.mp4"
     },
 
     { // anong nickname ang ugsto itawag sakin
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/s3.mp4"
     },
     { //Kaarawan
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/kaarawan.mp4"
     },
     { // Edad
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/edad.mp4"
     },
 
     { // Address
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/address.mp4"
     },
 
     { // internet
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/connection.mp4"
     },
 
     { // device
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/device.mp4"
     },
 
     { // kasalukuyan
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/kasalukuyang.mp4"
     },
@@ -278,60 +311,60 @@ const slides = [
     // saakin at sa pamilya
 
     { // me
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/me.mp4"
     },
     { // sport
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/sports.mp4"
     },
     { // guitar talent
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/talent.mp4"
     },
     { // family
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/family.mp4"
     },
 
         // Paaralan
         { // Paaralan
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/paaralan.mp4"
         },
         { // Edad
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/p1.mp4"
         },
         { // Edad
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/p2.mp4"
         },
         { // Edad
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/p3.mp4"
         },
         { // Edad
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/p4.mp4"
         },
         { // Edad
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/p5.mp4"
         },
 
         { // no money
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/no money.mp4"
         },
@@ -339,18 +372,18 @@ const slides = [
 
                 //scholarship
                 { // no money
-                    color: 0x4CAF50,
+                    color: 0x050629,
                     hasVideo: true,
                     videoPath: "src/vid/isko1.mp4"
                 },
                 { // no money
-                    color: 0x4CAF50,
+                    color: 0x050629,
                     hasVideo: true,
                     videoPath: "src/vid/isko2.mp4"
                 },
 
                 { // no money
-                    color: 0x4CAF50,
+                    color: 0x050629,
                     hasVideo: true,
                     videoPath: "src/vid/isko3.mp4"
                 },
@@ -358,28 +391,28 @@ const slides = [
         
         //Why CS
         { // Edad
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/whycs1.mp4"
         },
         { // Edad
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/whycs2.mp4"
         },
         { // Edad
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/whycs3.mp4"
         },
         { // Edad
-            color: 0x4CAF50,
+            color: 0x050629,
             hasVideo: true,
             videoPath: "src/vid/whycs4.mp4"
         },
 
     { // Motto
-        color: 0x4CAF50,
+        color: 0x050629,
         hasVideo: true,
         videoPath: "src/vid/motto.mp4"
     },
@@ -414,23 +447,182 @@ document.addEventListener('mousemove', (event) => {
     targetRotationX = mouseY * maxRotation;
 });
 
-// Load font first
+// Font loader with enhanced 3D text creation
 const fontLoader = new FontLoader();
-fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function(loadedFont) {
+fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(loadedFont) {
     font = loadedFont;
     createSlide(); // Create initial slide after font is loaded
+    
+    // Create 3D text for "PAGTATAYA BILANG 1" with enhanced materials
+    const titleGeometry = new TextGeometry('PAGTATAYA BILANG 1', {
+        font: loadedFont,
+        size: 2.2,
+        height: 0.5,
+        curveSegments: 12,
+        bevelEnabled: true,
+        bevelThickness: 0.1,
+        bevelSize: 0.05,
+        bevelSegments: 5
+    });
+    
+    titleGeometry.computeBoundingBox();
+    const titleWidth = titleGeometry.boundingBox.max.x - titleGeometry.boundingBox.min.x;
+    
+    // Create dynamic glowing material for title
+    const titleMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0xffffff,
+        emissive: 0x0055ff,
+        emissiveIntensity: 0.5,
+        metalness: 0.8,
+        roughness: 0.2,
+        reflectivity: 0.9,
+        clearcoat: 0.8,
+        clearcoatRoughness: 0.2
+    });
+    
+    const titleText = new THREE.Mesh(titleGeometry, titleMaterial);
+    titleText.position.set(-titleWidth/2, 10, -30);
+    scene.add(titleText);
+    
+    // Save original position for animation
+    titleText.userData.originalY = titleText.position.y;
+    titleText.userData.originalX = titleText.position.x;
+    
+    // Create 3D text for name "Adriel Magalona" with enhanced materials
+    const nameGeometry = new TextGeometry('Adriel Magalona', {
+        font: loadedFont,
+        size: 1.4,
+        height: 0.4,
+        curveSegments: 8,
+        bevelEnabled: true,
+        bevelThickness: 0.08,
+        bevelSize: 0.04,
+        bevelSegments: 3
+    });
+    
+    nameGeometry.computeBoundingBox();
+    const nameWidth = nameGeometry.boundingBox.max.x - nameGeometry.boundingBox.min.x;
+    
+    // Create metallic gold material for name
+    const nameMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0xffd700,
+        emissive: 0x553311,
+        emissiveIntensity: 0.3,
+        metalness: 0.9,
+        roughness: 0.1,
+        reflectivity: 1.0,
+        clearcoat: 0.9,
+        clearcoatRoughness: 0.1
+    });
+    
+    const nameText = new THREE.Mesh(nameGeometry, nameMaterial);
+    nameText.position.set(-nameWidth/2, 7, -30); // Position below title
+    scene.add(nameText);
+    
+    // Save original position for animation
+    nameText.userData.originalY = nameText.position.y;
+    nameText.userData.originalX = nameText.position.x;
+    
+    // Store references for animation
+    window.titleText3D = titleText;
+    window.nameText3D = nameText;
+    
+    // Add sparkle particles around the text
+    createSparkles(titleText.position.clone(), 100);
+    createSparkles(nameText.position.clone(), 60);
+}, undefined, function(error) {
+    console.error('Error loading font:', error);
+    
+    // Still init even if font fails to load
+    font = null;
+    createSlide(); // Try to create slide anyway
 });
 
-// Add lighting for better visibility
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambientLight);
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(5, 5, 5);
-scene.add(directionalLight);
+// Create sparkle particles function
+function createSparkles(centerPosition, count) {
+    const sparkleGeometry = new THREE.BufferGeometry();
+    const sparklePositions = new Float32Array(count * 3);
+    const sparkleSizes = new Float32Array(count);
+    
+    // Position particles in a cloud around the center
+    for (let i = 0; i < count; i++) {
+        const i3 = i * 3;
+        // Create a cloud around the text
+        const radius = 3 + Math.random() * 3;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        
+        sparklePositions[i3] = centerPosition.x + radius * Math.sin(phi) * Math.cos(theta);
+        sparklePositions[i3 + 1] = centerPosition.y + radius * Math.sin(phi) * Math.sin(theta);
+        sparklePositions[i3 + 2] = centerPosition.z + radius * Math.cos(phi);
+        
+        // Random sizes for sparkles
+        sparkleSizes[i] = Math.random() * 0.2 + 0.05;
+    }
+    
+    sparkleGeometry.setAttribute('position', new THREE.BufferAttribute(sparklePositions, 3));
+    sparkleGeometry.setAttribute('size', new THREE.BufferAttribute(sparkleSizes, 1));
+    
+    // Sparkle shader material
+    const sparkleMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            pointTexture: { value: new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png') }
+        },
+        vertexShader: `
+            attribute float size;
+            uniform float time;
+            void main() {
+                // Animate position slightly
+                vec3 pos = position;
+                pos.x += sin(time + position.z * 10.0) * 0.1;
+                pos.y += cos(time + position.x * 10.0) * 0.1;
+                
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                gl_PointSize = size * (300.0 / -mvPosition.z) * (0.7 + 0.3 * sin(time * 3.0 + gl_VertexID));
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D pointTexture;
+            uniform float time;
+            void main() {
+                // Pulsating opacity
+                float opacity = 0.5 + 0.5 * sin(time * 2.0 + gl_FragCoord.x + gl_FragCoord.y);
+                vec4 texColor = texture2D(pointTexture, gl_PointCoord);
+                
+                // White with a hint of blue or gold
+                float blueGoldMix = sin(time * 0.5 + gl_FragCoord.x * 0.01) * 0.5 + 0.5;
+                vec3 color = mix(
+                    vec3(0.8, 0.9, 1.0), // Light blue
+                    vec3(1.0, 0.9, 0.6), // Light gold
+                    blueGoldMix
+                );
+                
+                gl_FragColor = vec4(color, texColor.a * opacity);
+                if (gl_FragColor.a < 0.1) discard;
+            }
+        `,
+        blending: THREE.AdditiveBlending,
+        depthTest: false,
+        transparent: true
+    });
+    
+    const sparkles = new THREE.Points(sparkleGeometry, sparkleMaterial);
+    sparkles.userData.centerPosition = centerPosition.clone();
+    scene.add(sparkles);
+    
+    // Store reference for animation
+    if (!window.sparkleEffects) window.sparkleEffects = [];
+    window.sparkleEffects.push(sparkles);
+}
 
 // Create slide plane
 function createSlide() {
-    if (!font) return; // Don't create slide if font isn't loaded yet
+    if (!font) {
+        console.warn('Font not loaded, attempting to create slide without text');
+        // Continue with slide creation anyway, just won't have text
+    }
 
     // Store the previous slide mesh before removing it
     const oldSlideMesh = slideMesh;
@@ -467,6 +659,7 @@ function createSlide() {
         video.muted = false;
         video.playsInline = true;
         video.style.display = 'none';
+        video.preload = 'auto'; // Add preload attribute to load video faster
         document.body.appendChild(video);
         
         // Store reference for cleanup
@@ -524,14 +717,12 @@ function createSlide() {
         // Store reference
         window.videoMesh = videoMesh;
         
-        // Start video after a short delay to ensure it's loaded
-        setTimeout(() => {
-            video.play().catch(error => {
-                console.error('Video play error:', error);
-                // Add play button if autoplay fails
-                addPlayButton(slideGroup, video);
-            });
-        }, 100);
+        // Play video immediately rather than with a timeout
+        video.play().catch(error => {
+            console.error('Video play error:', error);
+            // Add play button if autoplay fails
+            addPlayButton(slideGroup, video);
+        });
     } 
     // If not a video slide, add the standard background and other elements
     else {
@@ -603,7 +794,7 @@ function createSlide() {
     slideGroup.add(borderMesh);
 
     // Always add title if it exists
-    if (slides[currentSlide].title) {
+    if (slides[currentSlide].title && font) {
         const titleGeometry = new TextGeometry(slides[currentSlide].title, {
             font: font,
             size: 0.5,
@@ -624,7 +815,7 @@ function createSlide() {
     }
 
     // Always add content if it exists
-    if (slides[currentSlide].content) {
+    if (slides[currentSlide].content && font) {
         const contentGeometry = new TextGeometry(slides[currentSlide].content, {
             font: font,
             size: 0.3,
@@ -986,36 +1177,69 @@ function previousSlide() {
     }
 }
 
-// Animation loop
+// Improved animation loop with optimized performance
 function animate() {
     requestAnimationFrame(animate);
+    
+    const time = Date.now() * 0.001; // Current time for animations
     
     // Update controls
     controls.update();
     
-    // Very slow star rotation - different speeds for each layer
-    stars.rotation.y += 0.0001;
-    stars.rotation.x += 0.00005;
+    // Optimized star animation (slower rotation to reduce GPU load)
+    stars.rotation.y += 0.00008;
+    stars.rotation.x += 0.00003;
     
-    stars2.rotation.y += 0.00015;
-    stars2.rotation.x += 0.00003;
+    // Animate the moving light in a circular pattern
+    movingLight.position.x = Math.sin(time * 0.2) * 15;
+    movingLight.position.y = Math.cos(time * 0.2) * 15;
+    movingLight.intensity = 1 + Math.sin(time) * 0.3;
     
-    stars3.rotation.y += 0.00005;
-    stars3.rotation.x += 0.00002;
-    
-    // Rotate Earth
-    if (window.earth) {
-        window.earth.rotation.y += 0.0005;
+    // Animate 3D texts with improved fluid motion
+    if (window.titleText3D) {
+        window.titleText3D.position.y = window.titleText3D.userData.originalY + Math.sin(time * 0.6) * 0.4;
+        window.titleText3D.position.x = window.titleText3D.userData.originalX + Math.cos(time * 0.4) * 0.3;
+        window.titleText3D.rotation.y = Math.sin(time * 0.2) * 0.1;
+        window.titleText3D.lookAt(camera.position);
     }
     
-    // Animate nebula
-    nebulaMaterial.uniforms.time.value += 0.001;
+    if (window.nameText3D) {
+        window.nameText3D.position.y = window.nameText3D.userData.originalY + Math.sin(time * 0.6 + 0.5) * 0.4;
+        window.nameText3D.position.x = window.nameText3D.userData.originalX + Math.cos(time * 0.4 + 0.3) * 0.3;
+        window.nameText3D.rotation.y = Math.sin(time * 0.2 + 0.5) * 0.1;
+        window.nameText3D.lookAt(camera.position);
+    }
+    
+    // Animate sparkle effects
+    if (window.sparkleEffects) {
+        window.sparkleEffects.forEach(sparkle => {
+            // Update time uniform for shader animation
+            sparkle.material.uniforms.time.value = time;
+            
+            // Make sparkles follow their text, but with some lag
+            const centerPos = sparkle.userData.centerPosition;
+            if (window.titleText3D && centerPos.y > 8) { // Title sparkles
+                sparkle.position.y = window.titleText3D.position.y - centerPos.y + sparkle.userData.centerPosition.y;
+                sparkle.position.x = window.titleText3D.position.x - centerPos.x + sparkle.userData.centerPosition.x;
+            } else if (window.nameText3D) { // Name sparkles
+                sparkle.position.y = window.nameText3D.position.y - centerPos.y + sparkle.userData.centerPosition.y;
+                sparkle.position.x = window.nameText3D.position.x - centerPos.x + sparkle.userData.centerPosition.x;
+            }
+        });
+    }
+    
+    // Animate nebula with improved performance
+    nebulaMaterial.uniforms.time.value += 0.0008; // Slower animation for better performance
     
     // Smoothly rotate slide to face cursor
     if (slideMesh) {
-        // Smoothly interpolate current rotation to target rotation
         slideMesh.rotation.y += (targetRotationY - slideMesh.rotation.y) * rotationSpeed;
         slideMesh.rotation.x += (targetRotationX - slideMesh.rotation.x) * rotationSpeed;
+    }
+    
+    // Rotate Earth if it exists
+    if (window.earth) {
+        window.earth.rotation.y += 0.0005;
     }
     
     renderer.render(scene, camera);
@@ -1023,6 +1247,12 @@ function animate() {
 
 // Initialize loading
 function init() {
+    // Prevent multiple initialization
+    if (initCalled) {
+        return;
+    }
+    initCalled = true;
+    
     // Hide loading screen
     const loadingScreen = document.querySelector('.loading');
     if (loadingScreen) {
@@ -1031,10 +1261,24 @@ function init() {
     
     // Start animation
     animate();
+    
+    // Create the first slide
+    createSlide();
 }
+
+// Track if init has been called
+let initCalled = false;
 
 // Start initialization
 init();
+
+// Set a safety timeout to make sure the presentation initializes even if loading takes too long
+setTimeout(() => {
+    if (!initCalled) {
+        console.warn('Safety timeout reached - forcing initialization');
+        init();
+    }
+}, 5000); // 5 seconds timeout
 
 // Add new interactive functions
 function pulseEffect() {
