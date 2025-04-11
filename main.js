@@ -428,6 +428,46 @@ let skillHighlighted = false;
 let textAnimated = false;
 let projectsShown = false;
 
+// Add video preloading system
+const videoCache = new Map(); // Cache for preloaded videos
+const preloadRange = 3; // How many videos to preload ahead
+
+// Function to preload videos
+function preloadVideos(startIndex) {
+    // Clear old preloaded videos that are no longer needed
+    videoCache.forEach((videoElement, index) => {
+        if (index < startIndex - 1 || index > startIndex + preloadRange) {
+            if (videoElement && videoElement !== window.videoElement) {
+                videoElement.pause();
+                videoElement.src = '';
+                videoElement.load();
+            }
+            videoCache.delete(index);
+        }
+    });
+    
+    // Preload upcoming videos
+    for (let i = startIndex; i < Math.min(startIndex + preloadRange, slides.length); i++) {
+        if (!videoCache.has(i) && slides[i].hasVideo && slides[i].videoPath) {
+            const video = document.createElement('video');
+            video.src = slides[i].videoPath;
+            video.crossOrigin = 'anonymous';
+            video.playsInline = true;
+            video.muted = true; // Keep muted until played
+            video.style.display = 'none';
+            video.load(); // Start loading the video
+            document.body.appendChild(video);
+            videoCache.set(i, video);
+            
+            // Force preloading by starting and immediately pausing
+            video.play().then(() => {
+                video.pause();
+                video.currentTime = 0;
+            }).catch(e => console.log('Preload play error (ignorable):', e));
+        }
+    }
+}
+
 // Add mouse tracking for slide orientation
 let mouseX = 0;
 let mouseY = 0;
@@ -651,16 +691,28 @@ function createSlide() {
     
     // Add video if this slide has one - do this first and early
     if (isVideoSlide) {
-        // Create video element
-        const video = document.createElement('video');
-        video.src = slides[currentSlide].videoPath;
-        video.crossOrigin = 'anonymous';
+        // Use cached video if available, otherwise create a new one
+        let video;
+        if (videoCache.has(currentSlide)) {
+            video = videoCache.get(currentSlide);
+            console.log('Using preloaded video for slide', currentSlide);
+        } else {
+            // Fallback to creating a new video if not preloaded
+            video = document.createElement('video');
+            video.src = slides[currentSlide].videoPath;
+            video.crossOrigin = 'anonymous';
+            video.playsInline = true;
+            video.style.display = 'none';
+            document.body.appendChild(video);
+            console.log('Creating new video for slide', currentSlide);
+        }
+        
+        // Update cache with current video
+        videoCache.set(currentSlide, video);
+        
+        // Common video settings
         video.loop = true;
-        video.muted = false;
-        video.playsInline = true;
-        video.style.display = 'none';
-        video.preload = 'auto'; // Add preload attribute to load video faster
-        document.body.appendChild(video);
+        video.muted = false; // Unmute when actually playing
         
         // Store reference for cleanup
         window.videoElement = video;
@@ -906,6 +958,9 @@ function createSlide() {
             }
         });
     }
+
+    // Preload videos for upcoming slides
+    preloadVideos(currentSlide + 1);
 }
 
 // Function to create a fallback image if loading fails
@@ -1258,6 +1313,9 @@ function init() {
     if (loadingScreen) {
         loadingScreen.style.display = 'none';
     }
+    
+    // Start preloading videos for first few slides
+    preloadVideos(0);
     
     // Start animation
     animate();
