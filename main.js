@@ -609,8 +609,8 @@ fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.jso
     
     // Create metallic gold material for name
     const nameMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xff092d,
-        emissive: 0xf25459,
+        color: 0xFF4500, // Changed to orange-red
+        emissive: 0xFF4500, // Changed to orange-red
         emissiveIntensity: 0.3,
         metalness: 0.9,
         roughness: 0.1,
