@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Adriel Magalona - Interactive Presentation</title>
     <!-- Preload critical resources -->
     <link rel="preload" href="https://unpkg.com/three@0.160.0/build/three.module.js" as="script">
@@ -12,6 +14,7 @@
             margin: 0;
             overflow: hidden;
             background: #000;
+            touch-action: none;
         }
         .loading {
             position: fixed;
@@ -28,23 +31,29 @@
             z-index: 1000;
         }
         .loading h1 {
-            font-size: 2em;
+            font-size: clamp(1.5em, 5vw, 2em);
             margin-bottom: 20px;
             animation: pulse 1.5s infinite;
+            text-align: center;
+            padding: 0 20px;
         }
         .loading p {
-            font-size: 1.2em;
+            font-size: clamp(1em, 3vw, 1.2em);
             opacity: 0.8;
             margin-bottom: 20px;
+            text-align: center;
+            padding: 0 20px;
         }
         .loading .status {
-            font-size: 1em;
+            font-size: clamp(0.8em, 2.5vw, 1em);
             color: #00ffff;
             margin-bottom: 15px;
             min-height: 20px;
+            text-align: center;
+            padding: 0 20px;
         }
         .loading .progress {
-            width: 200px;
+            width: min(80vw, 200px);
             height: 4px;
             background: rgba(255,255,255,0.1);
             border-radius: 2px;
@@ -79,6 +88,19 @@
             border-radius: 10px;
             text-align: center;
             z-index: 1001;
+            width: min(80vw, 400px);
+        }
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            .nav-container {
+                bottom: 10px !important;
+                flex-direction: column !important;
+                gap: 5px !important;
+            }
+            .nav-button {
+                padding: 8px 16px !important;
+                font-size: 14px !important;
+            }
         }
         @keyframes pulse {
             0% { opacity: 0.5; }

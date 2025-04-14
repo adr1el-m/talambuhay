@@ -3,89 +3,82 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 
-// Scene setup with improved fog for depth perception
+// Performance settings
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const performanceMode = {
+    particleCount: isMobile ? 10000 : 40000,
+    starSize: isMobile ? 0.4 : 0.3,
+    nebulaQuality: isMobile ? 16 : 32,
+    maxPixelRatio: isMobile ? 1 : 2,
+    enablePostProcessing: !isMobile,
+    enableBloom: !isMobile,
+    enableFog: !isMobile
+};
+
+// Scene setup with conditional fog
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000022); // Very dark blue background
-scene.fog = new THREE.FogExp2(0x000033, 0.001); // Add subtle fog for depth
-
-// Create starfield background
-const starGeometry = new THREE.BufferGeometry();
-const starVertices = [];
-
-// Generate a lot more stars for better visibility
-for (let i = 0; i < 40000; i++) {
-    const x = (Math.random() - 0.5) * 2000;
-    const y = (Math.random() - 0.5) * 2000;
-    const z = (Math.random() - 0.5) * 2000;
-    starVertices.push(x, y, z);
+scene.background = new THREE.Color(0x000022);
+if (performanceMode.enableFog) {
+    scene.fog = new THREE.FogExp2(0x000033, 0.001);
 }
 
-starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+// Optimized starfield creation with object pooling
+const createStarfield = (count, size, color, opacity) => {
+    const geometry = new THREE.BufferGeometry();
+    const vertices = new Float32Array(count * 3);
+    
+    for (let i = 0; i < count * 3; i += 3) {
+        vertices[i] = (Math.random() - 0.5) * 2000;
+        vertices[i + 1] = (Math.random() - 0.5) * 2000;
+        vertices[i + 2] = (Math.random() - 0.5) * 2000;
+    }
+    
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    
+    const material = new THREE.PointsMaterial({
+        color,
+        size,
+        transparent: true,
+        opacity,
+        sizeAttenuation: true,
+        depthWrite: false
+    });
+    
+    return new THREE.Points(geometry, material);
+};
 
-// Create simple but effective star material
-const starMaterial = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 0.3,    // Larger size for better visibility
-    transparent: true,
-    opacity: 0.8
-});
-
-const stars = new THREE.Points(starGeometry, starMaterial);
+// Create optimized starfields
+const stars = createStarfield(
+    performanceMode.particleCount,
+    performanceMode.starSize,
+    0xffffff,
+    0.8
+);
 scene.add(stars);
 
-// Add second layer of brighter blue-tinted stars
-const starGeometry2 = new THREE.BufferGeometry();
-const starVertices2 = [];
-
-for (let i = 0; i < 10000; i++) {
-    const x = (Math.random() - 0.5) * 1800;
-    const y = (Math.random() - 0.5) * 1800;
-    const z = (Math.random() - 0.5) * 1800;
-    starVertices2.push(x, y, z);
-}
-
-starGeometry2.setAttribute('position', new THREE.Float32BufferAttribute(starVertices2, 3));
-
-const starMaterial2 = new THREE.PointsMaterial({
-    color: 0xaaccff, // Slightly blue tint
-    size: 0.4,      // Larger size
-    transparent: true,
-    opacity: 0.9
-});
-
-const stars2 = new THREE.Points(starGeometry2, starMaterial2);
+const stars2 = createStarfield(
+    Math.floor(performanceMode.particleCount / 4),
+    performanceMode.starSize * 1.2,
+    0xaaccff,
+    0.9
+);
 scene.add(stars2);
 
-// Add third layer with larger prominent stars
-const starGeometry3 = new THREE.BufferGeometry();
-const starVertices3 = [];
-
-for (let i = 0; i < 1000; i++) {
-    const x = (Math.random() - 0.5) * 1500;
-    const y = (Math.random() - 0.5) * 1500;
-    const z = (Math.random() - 0.5) * 1500;
-    starVertices3.push(x, y, z);
-}
-
-starGeometry3.setAttribute('position', new THREE.Float32BufferAttribute(starVertices3, 3));
-
-const starMaterial3 = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: 0.8,      // Much larger for visibility
-    transparent: true,
-    opacity: 1.0
-});
-
-const stars3 = new THREE.Points(starGeometry3, starMaterial3);
+const stars3 = createStarfield(
+    Math.floor(performanceMode.particleCount / 40),
+    performanceMode.starSize * 2,
+    0xffffff,
+    1.0
+);
 scene.add(stars3);
 
-// Add nebula effect with improved shader
-const nebulaGeometry = new THREE.SphereGeometry(500, 32, 32);
+// Optimized nebula with adaptive quality
+const nebulaGeometry = new THREE.SphereGeometry(500, performanceMode.nebulaQuality, performanceMode.nebulaQuality);
 const nebulaMaterial = new THREE.ShaderMaterial({
     uniforms: {
         time: { value: 0 },
-        color1: { value: new THREE.Color(0x0040ff) }, // Bright blue
-        color2: { value: new THREE.Color(0xff0040) }  // Bright red
+        color1: { value: new THREE.Color(0x0040ff) },
+        color2: { value: new THREE.Color(0xff0040) }
     },
     vertexShader: `
         varying vec2 vUv;
@@ -103,7 +96,7 @@ const nebulaMaterial = new THREE.ShaderMaterial({
         varying vec2 vUv;
         varying vec3 vPosition;
         
-        // Improved noise function with better performance
+        // Optimized noise function
         float hash(float n) {
             return fract(sin(n) * 43758.5453);
         }
@@ -116,7 +109,7 @@ const nebulaMaterial = new THREE.ShaderMaterial({
             float n = p.x + p.y * 57.0 + p.z * 113.0;
             return mix(
                 mix(
-                    mix(hash(n + 0.0), hash(n + 1.0), f.x),
+                    mix(hash(n), hash(n + 1.0), f.x),
                     mix(hash(n + 57.0), hash(n + 58.0), f.x),
                     f.y),
                 mix(
@@ -127,85 +120,88 @@ const nebulaMaterial = new THREE.ShaderMaterial({
         }
         
         void main() {
-            // Create more dynamic, flowing nebula
             vec3 pos = normalize(vPosition);
-            float noiseScale = 1.5; // Larger scale patterns
+            float noiseScale = ${isMobile ? '2.0' : '1.5'}; // Adjust scale based on device
             
             float noiseVal = 
                 noise(pos * 8.0 * noiseScale + time * 0.1) * 0.5 +
-                noise(pos * 16.0 * noiseScale - time * 0.05) * 0.25 +
+                ${isMobile ? '' : 'noise(pos * 16.0 * noiseScale - time * 0.05) * 0.25 +'}
                 noise(pos * 32.0 * noiseScale + time * 0.2) * 0.125;
             
             float pattern = 0.5 + 0.5 * sin(noiseVal * 6.28 + time * 0.5);
-            
-            // Improved color blending with more contrast
             vec3 color = mix(color1, color2, smoothstep(0.2, 0.8, pattern));
-            
-            // Add depth and glow
-            float glow = pow(noiseVal, 2.0) * 0.5 + 0.2;
-            float alpha = glow * 0.35; // Slightly more transparent for performance
+            float alpha = ${isMobile ? '0.25' : '0.35'};
             
             gl_FragColor = vec4(color, alpha);
         }
     `,
     transparent: true,
-    side: THREE.BackSide
+    side: THREE.BackSide,
+    depthWrite: false
 });
+
 const nebula = new THREE.Mesh(nebulaGeometry, nebulaMaterial);
 scene.add(nebula);
 
-// Improved camera settings
+// Optimized camera and renderer setup
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 8;
+camera.position.z = isMobile ? 12 : 8; // Adjust camera distance for mobile
 
-// Renderer with post-processing
-const renderer = new THREE.WebGLRenderer({ 
-    antialias: true,
-    powerPreference: "high-performance"
+const renderer = new THREE.WebGLRenderer({
+    antialias: !isMobile,
+    powerPreference: "high-performance",
+    stencil: false,
+    depth: true
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, performanceMode.maxPixelRatio));
 document.body.appendChild(renderer.domElement);
 
-// Add orbit controls with improved settings
+// Touch-friendly controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.05;
+controls.dampingFactor = isMobile ? 0.08 : 0.05;
 controls.enableZoom = true;
-controls.minDistance = 1;
-controls.maxDistance = 30;
+controls.minDistance = isMobile ? 2 : 1;
+controls.maxDistance = isMobile ? 20 : 30;
 controls.maxPolarAngle = Math.PI / 2;
-controls.autoRotateSpeed = 0.5;
+controls.autoRotateSpeed = isMobile ? 0.3 : 0.5;
+controls.rotateSpeed = isMobile ? 0.5 : 1;
+controls.zoomSpeed = isMobile ? 0.5 : 1;
+controls.touchStart = () => {
+    document.body.style.overflow = 'hidden';
+};
+controls.touchEnd = () => {
+    document.body.style.overflow = '';
+};
 
-// Improved lighting
-const ambientLight = new THREE.AmbientLight(0x333366, 0.7); // Increased ambient light
+// Optimized lighting setup
+const ambientLight = new THREE.AmbientLight(0x333366, isMobile ? 0.9 : 0.7);
 scene.add(ambientLight);
 
-// Replace single directional light with multiple softer lights
-const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.5);
-directionalLight1.position.set(5, 3, 5);
-scene.add(directionalLight1);
+if (!isMobile) {
+    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight1.position.set(5, 3, 5);
+    scene.add(directionalLight1);
 
-const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
-directionalLight2.position.set(-5, 3, 5);
-scene.add(directionalLight2);
+    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight2.position.set(-5, 3, 5);
+    scene.add(directionalLight2);
+} else {
+    // Single optimized light for mobile
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    mainLight.position.set(0, 3, 5);
+    scene.add(mainLight);
+}
 
-const directionalLight3 = new THREE.DirectionalLight(0xffffff, 0.3);
-directionalLight3.position.set(0, -3, 5);
-scene.add(directionalLight3);
-
-// Modify moving light to be softer
-const movingLight = new THREE.PointLight(0x0066ff, 0.7, 50);
+// Mobile-optimized moving light
+const movingLight = new THREE.PointLight(0x0066ff, isMobile ? 0.5 : 0.7, isMobile ? 30 : 50);
 movingLight.position.set(0, 0, 15);
 scene.add(movingLight);
 
-// Add subtle rim light
-const rimLight = new THREE.DirectionalLight(0x0044ff, 0.3);
-rimLight.position.set(0, 0, -5);
-scene.add(rimLight);
-
-// Create navigation controls
+// Create responsive navigation controls
 const navContainer = document.createElement('div');
+navContainer.className = 'nav-container';
 navContainer.style.cssText = `
     position: fixed;
     bottom: 20px;
@@ -217,17 +213,18 @@ navContainer.style.cssText = `
 `;
 document.body.appendChild(navContainer);
 
-// Create navigation buttons
+// Responsive button styles
 const buttonStyle = `
-    padding: 10px 20px;
+    padding: ${isMobile ? '8px 16px' : '10px 20px'};
     background: rgba(255, 255, 255, 0.2);
     border: 2px solid rgba(255, 255, 255, 0.4);
     color: white;
     border-radius: 5px;
     cursor: pointer;
     font-family: Arial, sans-serif;
-    font-size: 16px;
+    font-size: ${isMobile ? '14px' : '16px'};
     transition: all 0.3s ease;
+    touch-action: manipulation;
 `;
 
 const prevButton = document.createElement('button');
@@ -2627,3 +2624,45 @@ function createVortex() {
     scene.add(vortex);
     window.vortex = vortex;
 }
+
+// Add responsive window resize handler
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    if (resizeTimeout) clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, performanceMode.maxPixelRatio));
+    }, 250);
+});
+
+// Memory management
+function dispose(obj) {
+    if (obj.geometry) {
+        obj.geometry.dispose();
+    }
+    if (obj.material) {
+        if (Array.isArray(obj.material)) {
+            obj.material.forEach(material => material.dispose());
+        } else {
+            obj.material.dispose();
+        }
+    }
+    if (obj.texture) {
+        obj.texture.dispose();
+    }
+}
+
+// Clean up function
+function cleanup() {
+    dispose(stars);
+    dispose(stars2);
+    dispose(stars3);
+    dispose(nebula);
+    renderer.dispose();
+    controls.dispose();
+}
+
+// Add cleanup on page unload
+window.addEventListener('unload', cleanup);
